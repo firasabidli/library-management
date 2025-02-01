@@ -1,12 +1,13 @@
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthService {
-  static final FlutterSecureStorage _storage = FlutterSecureStorage();
+  static final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
-  // Méthode pour se connecter
-  static Future<bool> login(String email, String password) async {
+  // Méthode de connexion
+  static Future<bool> login(BuildContext context, String email, String password) async {
     try {
       final response = await http.post(
         Uri.parse('http://localhost:5000/api/auth/login'),
@@ -17,19 +18,17 @@ class AuthService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        // Extraction du token et des informations utilisateur
         String token = data['token'];
         Map<String, dynamic> user = data['user'];
 
         if (token.isNotEmpty) {
-          // Sauvegarder le token dans le stockage sécurisé
           await _storage.write(key: 'token', value: token);
-
-          // Sauvegarder les informations utilisateur dans le stockage sécurisé
           await _storage.write(key: '_id', value: user['id']);
           await _storage.write(key: 'name', value: user['name']);
           await _storage.write(key: 'role', value: user['role']);
 
+          // Redirection vers Home après connexion
+          Navigator.pushReplacementNamed(context, '/home');
           return true;
         } else {
           throw Exception('Token manquant dans la réponse');
@@ -39,12 +38,12 @@ class AuthService {
         throw Exception('Erreur d\'authentification: ${errorData['message']}');
       }
     } catch (e) {
-      print("Erreur de login: $e");
-      rethrow;
+      debugPrint("Erreur de login: $e");
+      return false;
     }
   }
 
-  // Méthode pour s'inscrire (signup)
+  // Méthode d'inscription
   static Future<bool> signup(String name, String email, String password) async {
     try {
       final response = await http.post(
@@ -58,13 +57,11 @@ class AuthService {
       );
 
       if (response.statusCode == 201) {
-        // L'utilisateur a été créé avec succès
         final data = jsonDecode(response.body);
 
         String token = data['token'];
         Map<String, dynamic> user = data['user'];
 
-        // Sauvegarder le token et les informations utilisateur
         await _storage.write(key: 'token', value: token);
         await _storage.write(key: '_id', value: user['id']);
         await _storage.write(key: 'name', value: user['name']);
@@ -76,41 +73,33 @@ class AuthService {
         throw Exception('Erreur d\'inscription: ${errorData['message']}');
       }
     } catch (e) {
-      print("Erreur de signup: $e");
-      rethrow;
+      debugPrint("Erreur de signup: $e");
+      return false;
     }
   }
 
-  // Méthode pour se déconnecter
-  static Future<void> logout() async {
-    // Supprimer les données du stockage sécurisé
-    await _storage.delete(key: 'token');
-    await _storage.delete(key: '_id');
-    await _storage.delete(key: 'name');
-    await _storage.delete(key: 'role');
+  // Déconnexion
+  static Future<void> logout(BuildContext context) async {
+    await _storage.deleteAll();
+    Navigator.pushReplacementNamed(context, '/login');
   }
 
-  // Méthode pour vérifier si l'utilisateur est connecté
+  // Vérification de connexion
   static Future<bool> isLoggedIn() async {
-    // Vérifier si un token existe
     String? token = await _storage.read(key: 'token');
     return token != null;
   }
 
-  // Méthode pour récupérer les informations de l'utilisateur
+  // Récupérer les infos utilisateur
   static Future<Map<String, String?>> getUserInfo() async {
-    String? id = await _storage.read(key: '_id');
-    String? name = await _storage.read(key: 'name');
-    String? role = await _storage.read(key: 'role');
-
     return {
-      '_id': id,
-      'name': name,
-      'role': role,
+      '_id': await _storage.read(key: '_id'),
+      'name': await _storage.read(key: 'name'),
+      'role': await _storage.read(key: 'role'),
     };
   }
 
-  // Méthode pour récupérer le token (si nécessaire)
+  // Récupérer le token
   static Future<String?> getToken() async {
     return await _storage.read(key: 'token');
   }

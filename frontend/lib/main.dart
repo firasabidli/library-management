@@ -1,7 +1,8 @@
+import 'package:flutter/material.dart';
 import 'screens/home.dart';
 import 'screens/login.dart';
 import 'screens/signup.dart';
-import 'package:flutter/material.dart';
+import 'auth_middleware.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,12 +16,14 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Gestion de bibliothèque',
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)),
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+      ),
       initialRoute: '/login',
       routes: {
         '/signup': (context) => const SignupScreen(),
         '/login': (context) => const LoginScreen(),
-        '/home': (context) => const HomeScreen(),
+        '/home': (context) => AuthMiddleware(child: const HomeScreen()), // Protection ici
       },
     );
   }
