@@ -1,7 +1,6 @@
-// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously, prefer_const_constructors, prefer_const_literals_to_create_immutables
 
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart'; // Service d'inscription
+import '../../services/auth_service.dart'; // Service d'inscription
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({Key? key}) : super(key: key);
@@ -20,55 +19,68 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _isLoading = false;
 
   void _signup() async {
+  setState(() {
+    _isLoading = true;
+  });
+
+  final name = _nameController.text;
+  final email = _emailController.text;
+  final password = _passwordController.text;
+  final confirmPassword = _confirmPasswordController.text;
+
+  if (name.isEmpty ||
+      email.isEmpty ||
+      password.isEmpty ||
+      confirmPassword.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Veuillez remplir tous les champs.')),
+    );
     setState(() {
-      _isLoading = true;
+      _isLoading = false;
     });
+    return;
+  }
 
-    final name = _nameController.text;
-    final email = _emailController.text;
-    final password = _passwordController.text;
-    final confirmPassword = _confirmPasswordController.text;
+  if (password != confirmPassword) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Les mots de passe ne correspondent pas.')),
+    );
+    setState(() {
+      _isLoading = false;
+    });
+    return;
+  }
 
-    if (name.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Veuillez remplir tous les champs.')),
-      );
-      setState(() {
-        _isLoading = false;
-      });
-      return;
-    }
+  try {
+    // Appel à la méthode signup
+    bool success = await AuthService.signup(name, email, password);
 
-    if (password != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Les mots de passe ne correspondent pas.')),
-      );
-      setState(() {
-        _isLoading = false;
-      });
-      return;
-    }
-
-    try {
-      bool success = await AuthService.signup(name, email, password);
-
-      if (success) {
-        Navigator.pushReplacementNamed(context, '/home');
-      } else {
+    if (success) {
+      // Si l'inscription est réussie, on appelle ensuite la méthode login pour connecter l'utilisateur
+      bool loginSuccess = await AuthService.login(context, email, password);
+      if (!loginSuccess) {
+        // En cas d'échec de la connexion, vous pouvez afficher un message approprié.
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Échec de l\'inscription. Veuillez réessayer.')),
+          SnackBar(content: Text('Inscription réussie, mais échec de la connexion automatique.')),
         );
       }
-    } catch (e) {
+      // Note : la méthode login de AuthService effectue déjà une redirection vers '/home'
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Une erreur est survenue. Réessayez plus tard.')),
+        SnackBar(content: Text('Échec de l\'inscription. Veuillez réessayer.')),
       );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Une erreur est survenue. Réessayez plus tard.')),
+    );
+  } finally {
+    setState(() {
+      _isLoading = false;
+    });
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

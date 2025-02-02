@@ -1,3 +1,4 @@
+// auth_service.dart
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -17,7 +18,6 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
         String token = data['token'];
         Map<String, dynamic> user = data['user'];
 
@@ -27,7 +27,6 @@ class AuthService {
           await _storage.write(key: 'name', value: user['name']);
           await _storage.write(key: 'role', value: user['role']);
 
-          // Redirection vers Home après connexion
           Navigator.pushReplacementNamed(context, '/home');
           return true;
         } else {
@@ -42,41 +41,32 @@ class AuthService {
       return false;
     }
   }
+// Méthode signup
+ static Future<bool> signup(String name, String email, String password) async {
+  try {
+    final response = await http.post(
+      Uri.parse('http://localhost:5000/api/auth/signup'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'name': name,
+        'email': email,
+        'password': password,
+      }),
+    );
 
-  // Méthode d'inscription
-  static Future<bool> signup(String name, String email, String password) async {
-    try {
-      final response = await http.post(
-        Uri.parse('http://localhost:5000/api/auth/signup'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'name': name,
-          'email': email,
-          'password': password,
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-
-        String token = data['token'];
-        Map<String, dynamic> user = data['user'];
-
-        await _storage.write(key: 'token', value: token);
-        await _storage.write(key: '_id', value: user['id']);
-        await _storage.write(key: 'name', value: user['name']);
-        await _storage.write(key: 'role', value: user['role']);
-
-        return true;
-      } else {
-        final errorData = jsonDecode(response.body);
-        throw Exception('Erreur d\'inscription: ${errorData['message']}');
-      }
-    } catch (e) {
-      debugPrint("Erreur de signup: $e");
-      return false;
+    if (response.statusCode == 201) {
+      // Par exemple, vous pouvez renvoyer true directement sans traiter de token
+      return true;
+    } else {
+      final errorData = jsonDecode(response.body);
+      throw Exception('Erreur d\'inscription: ${errorData['message']}');
     }
+  } catch (e) {
+    debugPrint("Erreur de signup: $e");
+    return false;
   }
+}
+
 
   // Déconnexion
   static Future<void> logout(BuildContext context) async {

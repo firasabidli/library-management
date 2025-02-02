@@ -1,48 +1,7 @@
+// ignore_for_file: prefer_const_constructors
+
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
-class AuthService {
-  static final FlutterSecureStorage _storage = const FlutterSecureStorage();
-
-  // Méthode de connexion
-  static Future<bool> login(BuildContext context, String email, String password) async {
-    try {
-      final response = await http.post(
-        Uri.parse('http://localhost:5000/api/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        String token = data['token'];
-        Map<String, dynamic> user = data['user'];
-
-        if (token.isNotEmpty) {
-          await _storage.write(key: 'token', value: token);
-          await _storage.write(key: '_id', value: user['id']);
-          await _storage.write(key: 'name', value: user['name']);
-          await _storage.write(key: 'role', value: user['role']);
-
-          if (context.mounted) {
-            Navigator.pushReplacementNamed(context, '/home');
-          }
-          return true;
-        } else {
-          throw Exception('Token manquant dans la réponse');
-        }
-      } else {
-        final errorData = jsonDecode(response.body);
-        throw Exception('Erreur d\'authentification: ${errorData['message']}');
-      }
-    } catch (e) {
-      debugPrint("Erreur de login: $e");
-      return false;
-    }
-  }
-}
+import '../../services/auth_service.dart'; // Par exemple, si c'est celui qui contient votre logique d'authentification.
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -56,16 +15,29 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _redirectIfAuthenticated();
+  }
+
+  Future<void> _redirectIfAuthenticated() async {
+    bool isLoggedIn = await AuthService.isLoggedIn();
+    if (isLoggedIn) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, '/home');
+      });
+    }
+  }
+
   void _login() async {
     setState(() => _isLoading = true);
-
     final email = _emailController.text;
     final password = _passwordController.text;
     final BuildContext currentContext = context;
 
     try {
       bool success = await AuthService.login(currentContext, email, password);
-
       if (!success && currentContext.mounted) {
         ScaffoldMessenger.of(currentContext).showSnackBar(
           const SnackBar(content: Text('Échec de la connexion. Vérifiez vos informations.')),
@@ -84,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
@@ -111,7 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(fontSize: 16, color: Colors.white),
                 ),
                 const Text(
-                  "HOMELAND",
+                  "Maktabaty",
                   style: TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.bold,
@@ -151,54 +123,52 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: true,
                 ),
                 const SizedBox(height: 24),
-               Center(
-  child: AnimatedContainer(
-    duration: const Duration(milliseconds: 300),
-    width: _isLoading ? 50 : 200,
-    height: 50,
-    decoration: BoxDecoration(
-      color: const Color(0xFF83FF7D),
-      borderRadius: BorderRadius.circular(25),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 4,
-          offset: const Offset(0, 3),
-        ),
-      ],
-    ),
-    child: _isLoading
-        ? const Center(
-            child: CircularProgressIndicator(
-              color: Colors.white,
-              strokeWidth: 2,
-            ),
-          )
-        : GestureDetector(
-            onTap: _login,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.login, color: Colors.white),
-                const SizedBox(width: 8),
-                // Utilisez Flexible pour éviter les débordements
-                Flexible(
-                  child: const Text(
-                    "Se connecter",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                Center(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    width: _isLoading ? 50 : 200,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF83FF7D),
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
-                    overflow: TextOverflow.ellipsis,
+                    child: _isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : GestureDetector(
+                            onTap: _login,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [ // Ajout de const ici pour les widgets enfants
+                                Icon(Icons.login, color: Colors.white),
+                                SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    "Se connecter",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                   ),
                 ),
-              ],
-            ),
-          ),
-  ),
-),
-
                 const SizedBox(height: 16),
                 GestureDetector(
                   onTap: () {

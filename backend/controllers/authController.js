@@ -28,11 +28,23 @@ exports.signup = async (req, res) => {
 
     await user.save();
 
-    res.status(201).json({ message: 'Utilisateur créé avec succès.' });
+    // Générer un token JWT (similaire à ce qui est fait dans le login)
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    // Renvoyer le token et les infos utilisateur
+    res.status(201).json({ 
+      token, 
+      user: { id: user._id, name: user.name, role: user.role } 
+    });
   } catch (error) {
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
   }
 };
+
 
 // Login
 exports.login = async (req, res) => {

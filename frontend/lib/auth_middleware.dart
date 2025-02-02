@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'screens/login.dart';
+import 'screens/auth/login.dart';
 
 class AuthMiddleware extends StatefulWidget {
   final Widget child;
