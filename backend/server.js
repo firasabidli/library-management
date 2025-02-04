@@ -10,6 +10,7 @@ const expenseRoutes = require('./routes/expenseRoutes');
 const employeeRoutes = require('./routes/employeeRoutes');
 const neededProductRoutes = require('./routes/neededProductRoutes');
 const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -34,7 +35,7 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/needed-products', neededProductRoutes);
 app.use('/api/auth', authRoutes);
-
+app.use('/api/users', userRoutes);
 // Default Route
 app.get('/', (req, res) => {
   res.send('API is running...');
