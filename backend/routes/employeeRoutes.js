@@ -1,14 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const { addEmployee, getEmployees, paySalary } = require('../controllers/employeeController');
+const employeeController = require('../controllers/employeeController');
 
-// Add Employee
-router.post('/', addEmployee);
+// Route pour ajouter un employé
+router.post('/employees', employeeController.addEmployee);
 
-// Get All Employees
-router.get('/', getEmployees);
+// Route pour récupérer tous les employés
+router.get('/employees', employeeController.getEmployees);
 
-// Pay Salary
-router.put('/pay/:id', paySalary);
+// Route pour modifier un employé
+router.put('/employees/:id', employeeController.updateEmployee);
+
+// Route pour payer le salaire d'un employé
+router.post('/employees/:id/pay', employeeController.paySalary);
+
+// Route pour supprimer un employé
+router.delete('/employees/:id', employeeController.deleteEmployee);
 
 module.exports = router;

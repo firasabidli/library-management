@@ -32,7 +32,7 @@ connectDB();
 app.use('/api/products', productRoutes);
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/expenses', expenseRoutes);
-app.use('/api/employees', employeeRoutes);
+app.use('/api', employeeRoutes);
 app.use('/api/needed-products', neededProductRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
