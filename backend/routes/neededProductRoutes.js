@@ -1,11 +1,15 @@
 const express = require('express');
 const router = express.Router();
+const neededProductController = require('../controllers/neededProductController');
 
-// Ensure that the correct controller functions are imported
-const { generateNeededProductsList, generateNeededProductPDF } = require('../controllers/neededProductController');
+// Routes CRUD
+router.post('/', neededProductController.addNeededProduct);
+router.get('/', neededProductController.getNeededProducts);
+router.put('/:id', neededProductController.updateNeededProduct);
+router.put('/state/:id', neededProductController.updateNeededProductState);
+router.delete('/:id', neededProductController.deleteNeededProduct);
 
-// Define the routes with correct callback functions
-router.get('/', generateNeededProductsList);   // For listing needed products
-router.get('/pdf', generateNeededProductPDF);  // For generating PDF report
+// Route pour générer le PDF
+router.get('/generate-pdf', neededProductController.generateNeededProductPDF);
 
 module.exports = router;
